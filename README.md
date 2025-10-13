@@ -2,76 +2,86 @@
 
 ## Project Info
 
-**URL**: http://localhost:8080 (or your deployed URL)
+**Local URL:** http://localhost:8080  
+*(Replace with your deployed URL if hosted online)*
 
-## How can I edit this code?
+QueryMind is a web application that allows users to manage multiple workspaces, connect to databases, and generate SQL queries from natural language inputs.
 
-You can edit the application in multiple ways:
+---
 
-### Using your preferred IDE
+## How to Edit and Run Locally
 
-If you want to work locally using your IDE, follow these steps:
+### Using Your IDE
 
+1. **Clone the repository**  
 ```sh
-# Step 1: Clone the repository
 git clone <YOUR_GIT_URL>
+Navigate to the project directory
 
-# Step 2: Navigate to the project directory
+sh
+Copy code
 cd <YOUR_PROJECT_NAME>
+Install dependencies
 
-# Step 3: Install dependencies
+sh
+Copy code
 npm install
+# or
+yarn install
+Start the development server with hot reload
 
-# Step 4: Start the development server with hot reload
+sh
+Copy code
 npm run dev
-Editing files directly in GitHub
+# or
+yarn dev
+Open your browser at http://localhost:8080 (or the URL Vite provides).
+
+Editing Files Directly on GitHub
 Navigate to the file you want to edit.
 
 Click the "Edit" button (pencil icon) at the top right.
 
-Make your changes and commit them.
+Make your changes and commit them directly.
 
 Using GitHub Codespaces
 Go to the main page of your repository.
 
-Click the green "Code" button and select the "Codespaces" tab.
+Click the green Code button → Codespaces tab.
 
-Click "New codespace" to launch a development environment.
+Click New codespace to launch a development environment.
 
-Edit files and commit/push changes from within Codespaces.
+Edit files, commit, and push changes directly from Codespaces.
 
 Technologies Used
-This project is built with:
+Vite – Frontend build tool
 
-Vite
+React – UI library
 
-React
+Tailwind CSS – Styling framework
 
-Tailwind CSS
+shadcn-ui – Prebuilt UI components
 
-shadcn-ui
-
-TypeScript (optional, if used)
+TypeScript – Optional type safety
 
 Project Structure
-/src – All source code
+bash
+Copy code
+/src          – Source code
+  /pages      – React pages (Index, Auth, Workspace)
+  /components – Reusable components (Sidebar, Toasts, Modals)
+/public       – Static assets (index.html)
+Deployment
+You can deploy QueryMind to any static hosting service like Vercel, Netlify, or your own server.
 
-/src/pages – React pages like Index, Auth, Workspace
-
-/src/components – Reusable components like Sidebar, Toasts
-
-/public – Static assets like index.html
-
-How to Deploy
-You can deploy this project to any static hosting provider like Vercel, Netlify, or your own server:
-
-Build the project:
+Build the project
 
 sh
 Copy code
 npm run build
+# or
+yarn build
 Deploy the dist/ folder to your hosting service.
 
 Custom Domain
-If deploying to a hosting service, follow their documentation to configure a custom domain.
-
+Follow your hosting provider's documentation to configure a custom domain if needed.
