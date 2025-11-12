@@ -1,6 +1,6 @@
 // src/lib/auth.js
 
-const API_BASE_URL = "http://localhost:8080/user";
+const API_BASE_URL = "http://localhost:8000/user";
 
 export const signUp = async (email, password, name) => {
   try {
@@ -42,6 +42,8 @@ export const signIn = async (email, password) => {
     return { user: null, error: "Network error during login" };
   }
 };
+
+
 
 export const signOut = async () => {
   localStorage.removeItem("currentUser");
