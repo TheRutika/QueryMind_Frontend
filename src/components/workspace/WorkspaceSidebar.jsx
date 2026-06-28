@@ -3,8 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   Database,
   PlusCircle,
-  Settings,
-  LogOut,
   CheckCircle,
   XCircle,
   Clock,
@@ -13,15 +11,6 @@ import { toast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/context/WorkspaceContext.jsx";
 import WorkspaceModal from "@/components/workspace/WorkspaceModal.jsx";
 import { DatabaseConnectionModal } from "@/components/workspace/DatabaseConnectionModal.jsx";
-
-// Dummy DB connection
-const connectToDB = async (config) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      Math.random() < 0.9 ? resolve(true) : reject(new Error("Failed to connect"));
-    }, 1000);
-  });
-};
 
 export default function WorkspaceSidebar({ history, onSelectQuery }) {
   const {
@@ -34,35 +23,46 @@ export default function WorkspaceSidebar({ history, onSelectQuery }) {
 
   const [workspaceModalOpen, setWorkspaceModalOpen] = useState(false);
   const [dbModalOpen, setDbModalOpen] = useState(false);
-  const [pendingWorkspaceId, setPendingWorkspaceId] = useState(null);
+  const [pendingWorkspaceName, setPendingWorkspaceName] = useState(null);
 
-  // Workspace created
-  const handleWorkspaceCreated = (newWorkspace) => {
-    addWorkspace(newWorkspace);
-    setPendingWorkspaceId(newWorkspace.id);
+  // Workspace name entered - now ask for DB config
+  const handleWorkspaceCreated = (workspaceName) => {
+    setPendingWorkspaceName(workspaceName);
     setDbModalOpen(true);
   };
 
-  // DB connected
+  // DB config entered - now create workspace WITH DB config
   const handleDbConnected = async (config) => {
-    if (!pendingWorkspaceId) return;
+    if (!pendingWorkspaceName) return;
 
     setDbModalOpen(false);
-    updateWorkspaceStatus(pendingWorkspaceId, "pending"); // show pending while connecting
 
     try {
-      await connectToDB(config);
-
-      updateWorkspaceStatus(pendingWorkspaceId, "connected", { dbConfig: config });
-      toast({
-        title: "Connected!",
-        description: `Workspace is now ready.`,
+      // Call backend API with BOTH workspace name and DB config
+      // Backend expects: workspaceName, db_host, db_user, db_password, db_service, db_name
+      const response = await addWorkspace({
+        workspaceName: pendingWorkspaceName,
+        db_host: config.host,
+        db_user: config.user,
+        db_password: config.password,
+        db_service: config.service,
+        db_name: config.database,
       });
+
+      toast({
+        title: "Success!",
+        description: `Workspace "${pendingWorkspaceName}" created and connected.`,
+      });
+
+      // Context already updated the state and set as current workspace
     } catch (err) {
-      updateWorkspaceStatus(pendingWorkspaceId, "failed");
-      toast({ title: "Connection Failed", description: err.message });
+      toast({ 
+        title: "Error", 
+        description: err.message || "Failed to create workspace",
+        variant: "destructive"
+      });
     } finally {
-      setPendingWorkspaceId(null);
+      setPendingWorkspaceName(null);
     }
   };
 
@@ -128,7 +128,7 @@ export default function WorkspaceSidebar({ history, onSelectQuery }) {
                   </Button>
                 ))
             ) : (
-              <p className="text-sm text-gray-500">History will be coming soon</p>
+              <p className="text-sm text-gray-500">No queries yet</p>
             )}
           </div>
         </div>

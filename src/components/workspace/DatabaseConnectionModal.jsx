@@ -21,29 +21,33 @@ export function DatabaseConnectionModal({ open, onClose, onConnect }) {
 
   const handleConnect = async () => {
     if (!host || !username || !database) {
-      toast({ title: "Please fill in all required fields." });
+      toast({ 
+        title: "Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
       return;
     }
     setLoading(true);
     try {
-      const success = await onConnect({
-        type,
+      // Pass config with backend field names
+      await onConnect({
+        service: type,
         host,
-        username,
+        user: username,
         password,
         database,
       });
-      if (success) {
-        toast({
-          title: "Database Connected",
-          description: `Connected to ${type.toUpperCase()} successfully.`,
-        });
-        onClose();
-      }
+      toast({
+        title: "Success",
+        description: `Connected to ${type.toUpperCase()} successfully.`,
+      });
+      onClose();
     } catch (err) {
       toast({
         title: "Connection Failed",
         description: err.message || "Unable to connect.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);

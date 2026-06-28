@@ -9,10 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Database, Sparkles, Zap, Shield } from "lucide-react";
 import { signIn, signUp } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useWorkspace } from "@/context/WorkspaceContext";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refetchWorkspaces } = useWorkspace();
   const [isLoading, setIsLoading] = useState(false);
 
   // ✅ SIGN IN HANDLER
@@ -34,8 +36,11 @@ const Auth = () => {
 
       toast({ title: "Welcome back!", description: "Successfully signed in." });
 
-      // Delay ensures localStorage is set before route check
-      setTimeout(() => navigate("/workspace"), 300);
+      // Refetch workspaces after login
+      setTimeout(async () => {
+        await refetchWorkspaces();
+        navigate("/workspace");
+      }, 300);
     }
 
     setIsLoading(false);
@@ -61,8 +66,11 @@ const Auth = () => {
 
       toast({ title: "Account created!", description: "Successfully signed up." });
 
-      // Slight delay for localStorage consistency
-      setTimeout(() => navigate("/workspace"), 300);
+      // Refetch workspaces after signup
+      setTimeout(async () => {
+        await refetchWorkspaces();
+        navigate("/workspace");
+      }, 300);
     }
 
     setIsLoading(false);

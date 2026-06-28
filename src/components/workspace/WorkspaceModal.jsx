@@ -16,23 +16,16 @@ export default function WorkspaceModal({ open, onClose, onWorkspaceCreated }) {
 
   const handleCreateWorkspace = () => {
     if (!workspaceName.trim()) {
-      toast({ title: "Please enter a workspace name" });
+      toast({ 
+        title: "Error",
+        description: "Please enter a workspace name",
+        variant: "destructive"
+      });
       return;
     }
 
-    const newWorkspace = {
-      id: Date.now(), // unique ID
-      name: workspaceName.trim(),
-      status: "pending", // pending until DB connected
-    };
-
-    onWorkspaceCreated(newWorkspace);
-
-    toast({
-      title: "Workspace created",
-      description: `${workspaceName} created successfully.`,
-    });
-
+    // Pass workspace name to parent, which will collect DB config and create together
+    onWorkspaceCreated(workspaceName.trim());
     setWorkspaceName("");
     onClose();
   };
@@ -56,8 +49,11 @@ export default function WorkspaceModal({ open, onClose, onWorkspaceCreated }) {
         </div>
 
         <DialogFooter>
-          <Button onClick={handleCreateWorkspace} className="bg-primary hover:bg-primary/90">
-            Create
+          <Button 
+            onClick={handleCreateWorkspace} 
+            className="bg-primary hover:bg-primary/90"
+          >
+            Continue
           </Button>
         </DialogFooter>
       </DialogContent>

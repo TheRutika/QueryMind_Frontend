@@ -1,15 +1,48 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { getWorkspaces, addWorkspace as apiAddWorkspace, connectWorkspace as apiConnectWorkspace } from "@/lib/auth";
 
 const WorkspaceContext = createContext();
 
 export const WorkspaceProvider = ({ children }) => {
-  const [workspaces, setWorkspaces] = useState([
-    { id: 1, name: "Default Workspace", status: "connected" },
-    { id: 2, name: "Analytics", status: "connected" },
-  ]);
-
-  const [currentWorkspace, setCurrentWorkspace] = useState(workspaces[0]);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [currentWorkspace, setCurrentWorkspace] = useState(null);
   const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Load workspaces from backend on mount (only if user is logged in)
+  useEffect(() => {
+    const fetchWorkspaces = async () => {
+      try {
+        // Only fetch if user has a token (is logged in)
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          console.log("No token found - skipping workspace fetch");
+          setLoading(false);
+          return;
+        }
+
+        setLoading(true);
+        const data = await getWorkspaces();
+        const workspacesArray = Array.isArray(data) ? data : data.workspaces || [];
+        setWorkspaces(workspacesArray);
+        if (workspacesArray.length > 0) {
+          setCurrentWorkspace(workspacesArray[0]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch workspaces:", err);
+        setError(err.message);
+        // Fallback to empty array - don't crash if backend is down
+        setWorkspaces([]);
+        console.log("Backend unreachable during startup. Continue with empty workspaces.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Give frontend a second to load even if backend is down
+    setTimeout(() => fetchWorkspaces(), 500);
+  }, []);
 
   // Load history from localStorage
   useEffect(() => {
@@ -22,19 +55,45 @@ export const WorkspaceProvider = ({ children }) => {
     localStorage.setItem("queryHistory", JSON.stringify(history));
   }, [history]);
 
-  // Add new workspace
-  const addWorkspace = (workspace) => {
-    const exists = workspaces.find((ws) => ws.name === workspace.name);
-    if (exists) return;
+  // Add new workspace via API
+  const addWorkspace = async (workspaceData) => {
+    try {
+      const result = await apiAddWorkspace(workspaceData);
+      const newWorkspace = result.workspace || result;
+      
+      setWorkspaces((prev) => [...prev, newWorkspace]);
+      setCurrentWorkspace(newWorkspace);
+      setError(null);
+      return newWorkspace;
+    } catch (err) {
+      console.error("Failed to add workspace:", err);
+      setError(err.message);
+      throw err;
+    }
+  };
 
-    const newWorkspace = {
-      id: Date.now(),
-      name: workspace.name,
-      status: "pending",
-    };
-
-    setWorkspaces((prev) => [...prev, newWorkspace]);
-    setCurrentWorkspace(newWorkspace);
+  // Connect workspace via API (for database configuration)
+  const connectWorkspace = async (workspaceId, connectionConfig) => {
+    try {
+      const result = await apiConnectWorkspace({
+        workspaceId,
+        ...connectionConfig,
+      });
+      
+      // Update the workspace status in state
+      setWorkspaces((prev) =>
+        prev.map((ws) => 
+          ws.id === workspaceId ? { ...ws, status: "connected", ...result } : ws
+        )
+      );
+      
+      setError(null);
+      return result;
+    } catch (err) {
+      console.error("Failed to connect workspace:", err);
+      setError(err.message);
+      throw err;
+    }
   };
 
   // Update workspace status
@@ -52,16 +111,70 @@ export const WorkspaceProvider = ({ children }) => {
   };
 
   // Add query to history
-  const addHistory = (question, sql) => {
+  const addHistory = (question, sql, results = []) => {
     if (!currentWorkspace) return;
     const newEntry = {
       id: Date.now(),
       question,
       sql,
+      results,
       workspaceId: currentWorkspace.id,
       timestamp: new Date().toISOString(),
     };
     setHistory((prev) => [newEntry, ...prev]);
+  };
+
+  const loadConversationHistory = (workspaceId, messages = []) => {
+    if (!workspaceId || !Array.isArray(messages) || messages.length === 0) {
+      return;
+    }
+
+    const entries = [];
+    for (let index = 0; index < messages.length; index += 1) {
+      const message = messages[index];
+      if (message.role !== "user") {
+        continue;
+      }
+
+      const assistant = messages.slice(index + 1).find((item) => item.role === "assistant");
+      entries.push({
+        id: message.message_id || `${workspaceId}-${message.sequence_number || index}`,
+        question: message.content,
+        sql: assistant?.generated_sql || assistant?.content || "",
+        workspaceId,
+        timestamp: message.created_at || new Date().toISOString(),
+      });
+    }
+
+    if (entries.length === 0) {
+      return;
+    }
+
+    setHistory((prev) => {
+      const otherWorkspaces = prev.filter((item) => item.workspaceId !== workspaceId);
+      return [...entries.reverse(), ...otherWorkspaces];
+    });
+  };
+
+  // Refetch workspaces (call after login)
+  const refetchWorkspaces = async () => {
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    try {
+      setLoading(true);
+      const data = await getWorkspaces();
+      const workspacesArray = Array.isArray(data) ? data : data.workspaces || [];
+      setWorkspaces(workspacesArray);
+      if (workspacesArray.length > 0) {
+        setCurrentWorkspace(workspacesArray[0]);
+      }
+    } catch (err) {
+      console.error("Failed to refetch workspaces:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,8 +185,13 @@ export const WorkspaceProvider = ({ children }) => {
         setCurrentWorkspace,
         history,
         addHistory,
+        loadConversationHistory,
         addWorkspace,
+        connectWorkspace,
         updateWorkspaceStatus,
+        loading,
+        error,
+        refetchWorkspaces,  // ✅ New function
       }}
     >
       {children}

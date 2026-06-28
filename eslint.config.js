@@ -12,6 +12,11 @@ export default [
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
       sourceType: "module",
     },
     plugins: {
@@ -23,6 +28,12 @@ export default [
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "no-unused-vars": "warn"
+    },
+  },
+  {
+    files: ["*.config.js"],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 ];
