@@ -112,20 +112,24 @@ export default function WorkspaceSidebar({ history, onSelectQuery }) {
         {/* History */}
         <div className="mt-6">
           <h3 className="text-xs uppercase text-gray-400 mb-2">History</h3>
-          <div className="space-y-1 max-h-48 overflow-y-auto">
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
             {history.filter((h) => h.workspaceId === currentWorkspace?.id).length > 0 ? (
               history
                 .filter((h) => h.workspaceId === currentWorkspace?.id)
                 .map((item) => (
-                  <Button
+                  <button
                     key={item.id}
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start text-sm text-gray-200 hover:text-white"
+                    type="button"
+                    className="w-full rounded-md border border-gray-800 bg-gray-950/40 px-3 py-2 text-left hover:border-purple-500/60 hover:bg-purple-500/10"
                     onClick={() => onSelectQuery && onSelectQuery(item)}
                   >
-                    {item.english || item.question || "Query"}
-                  </Button>
+                    <div className="truncate text-sm text-gray-200">
+                      {item.english || item.question || "Query"}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {item.timestamp ? new Date(item.timestamp).toLocaleString() : "Saved query"}
+                    </div>
+                  </button>
                 ))
             ) : (
               <p className="text-sm text-gray-500">No queries yet</p>

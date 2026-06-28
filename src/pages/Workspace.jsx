@@ -61,6 +61,7 @@ export default function Workspace() {
 
       updateWorkspaceStatus(currentWorkspace.id, "connected", {
         connectionResult: result,
+        schema: result.schema || {},
       });
       loadConversationHistory(
         result.workspace_id || currentWorkspace.id,
@@ -101,14 +102,19 @@ export default function Workspace() {
 
     try {
       // Backend currently stores DB config when a workspace is created.
-      // Reconnect by db_name; keep the entered config in local state for the session.
       const result = await connectWorkspaceAPI({
-        db_name: currentWorkspace.db_id,
+        workspaceId: currentWorkspace.id,
+        db_name: config.database,
+        db_host: config.host,
+        db_user: config.user,
+        db_password: config.password,
+        db_service: config.service,
       });
 
       updateWorkspaceStatus(currentWorkspace.id, "connected", {
         dbConfig: config,
         connectionResult: result,
+        schema: result.schema || {},
       });
       loadConversationHistory(
         result.workspace_id || currentWorkspace.id,

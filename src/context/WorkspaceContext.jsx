@@ -110,6 +110,15 @@ export const WorkspaceProvider = ({ children }) => {
     );
   };
 
+  const updateCurrentWorkspace = (extra = {}) => {
+    if (!currentWorkspace?.id) return;
+
+    setWorkspaces((prev) =>
+      prev.map((ws) => (ws.id === currentWorkspace.id ? { ...ws, ...extra } : ws))
+    );
+    setCurrentWorkspace((prev) => (prev ? { ...prev, ...extra } : prev));
+  };
+
   // Add query to history
   const addHistory = (question, sql, results = []) => {
     if (!currentWorkspace) return;
@@ -141,6 +150,19 @@ export const WorkspaceProvider = ({ children }) => {
         id: message.message_id || `${workspaceId}-${message.sequence_number || index}`,
         question: message.content,
         sql: assistant?.generated_sql || assistant?.content || "",
+        messages: [
+          {
+            id: message.message_id || `${workspaceId}-${index}-user`,
+            role: "user",
+            content: message.content,
+          },
+          {
+            id: assistant?.message_id || `${workspaceId}-${index}-assistant`,
+            role: "assistant",
+            content: assistant?.content || assistant?.generated_sql || "",
+            sql: assistant?.generated_sql || assistant?.content || "",
+          },
+        ],
         workspaceId,
         timestamp: message.created_at || new Date().toISOString(),
       });
@@ -189,6 +211,7 @@ export const WorkspaceProvider = ({ children }) => {
         addWorkspace,
         connectWorkspace,
         updateWorkspaceStatus,
+        updateCurrentWorkspace,
         loading,
         error,
         refetchWorkspaces,  // ✅ New function
